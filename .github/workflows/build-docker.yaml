@@ -71,12 +71,22 @@ jobs:
 
       - name: Build and push backend image
         run: |
-          docker build ./api/ -t praveenbgm06670/docker-backend:latest -t praveenbgm06670/docker-backend:$new_version
-          docker push praveenbgm06670/docker-backend:latest
-          docker push praveenbgm06670/docker-backend:$new_version
+          if [ "$new_version" != "$latest_version" ]; then
+            echo "Building and pushing backend image with version $new_version..."
+            docker build ./api/ -t praveenbgm06670/docker-backend:latest -t praveenbgm06670/docker-backend:$new_version
+            docker push praveenbgm06670/docker-backend:latest
+            docker push praveenbgm06670/docker-backend:$new_version
+          else
+            echo "Backend image with version $new_version already exists. Skipping push."
+          fi
 
       - name: Build and push frontend image
         run: |
-          docker build ./front-end-nextjs/ -t praveenbgm06670/docker-frontend:latest -t praveenbgm06670/docker-frontend:$new_version
-          docker push praveenbgm06670/docker-frontend:latest
-          docker push praveenbgm06670/docker-frontend:$new_version
+          if [ "$new_version" != "$latest_version" ]; then
+            echo "Building and pushing frontend image with version $new_version..."
+            docker build ./front-end-nextjs/ -t praveenbgm06670/docker-frontend:latest -t praveenbgm06670/docker-frontend:$new_version
+            docker push praveenbgm06670/docker-frontend:latest
+            docker push praveenbgm06670/docker-frontend:$new_version
+          else
+            echo "Frontend image with version $new_version already exists. Skipping push."
+          fi
