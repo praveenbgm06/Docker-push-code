@@ -1,5 +1,7 @@
 name: Build and Publish image to Docker Hub
 
+run-name: ${{ github.actor }} is testing out GitHub Actions 
+
 on:
   push:
     branches:
