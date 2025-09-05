@@ -35,32 +35,42 @@ jobs:
             type=ref,event=branch
             type=raw,value=latest
 
-      - name: Build backend image
+      - name: Fetch latest version from Docker Hub (Backend)
+        id: fetch_backend_version
         run: |
-          docker build ./api/ -t ${{ steps.meta_backend.outputs.tags }}
-        env:
-          DOCKER_BUILDKIT: 1
+          latest_version=$(curl -s https://hub.docker.com/v2/repositories/praveenbgm06670/docker-backend/tags | jq -r '.results[].name' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+          echo "Latest backend version: $latest_version"
+          if [ -z "$latest_version" ]; then
+            new_version="1.0.0"
+          else
+            IFS='.' read -r major minor patch <<< "$latest_version"
+            new_version="$major.$minor.$((patch + 1))"
+          fi
+          echo "New backend version: $new_version"
+          echo "new_version=$new_version" >> $GITHUB_ENV
 
-      - name: Build frontend image
+      - name: Fetch latest version from Docker Hub (Frontend)
+        id: fetch_frontend_version
         run: |
-          docker build ./front-end-nextjs/ -t ${{ steps.meta_frontend.outputs.tags }}
-        env:
-          DOCKER_BUILDKIT: 1
+          latest_version=$(curl -s https://hub.docker.com/v2/repositories/praveenbgm06670/docker-frontend/tags | jq -r '.results[].name' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+          echo "Latest frontend version: $latest_version"
+          if [ -z "$latest_version" ]; then
+            new_version="1.0.0"
+          else
+            IFS='.' read -r major minor patch <<< "$latest_version"
+            new_version="$major.$minor.$((patch + 1))"
+          fi
+          echo "New frontend version: $new_version"
+          echo "new_version=$new_version" >> $GITHUB_ENV
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: praveenbgm06670
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-
-      - name: Push backend image
+      - name: Build and push backend image
         run: |
-          for tag in ${{ steps.meta_backend.outputs.tags }}; do
-            docker push $tag
-          done
+          docker build ./api/ -t praveenbgm06670/docker-backend:latest -t praveenbgm06670/docker-backend:$new_version
+          docker push praveenbgm06670/docker-backend:latest
+          docker push praveenbgm06670/docker-backend:$new_version
 
-      - name: Push frontend image
+      - name: Build and push frontend image
         run: |
-          for tag in ${{ steps.meta_frontend.outputs.tags }}; do
-            docker push $tag
-            done
+          docker build ./front-end-nextjs/ -t praveenbgm06670/docker-frontend:latest -t praveenbgm06670/docker-frontend:$new_version
+          docker push praveenbgm06670/docker-frontend:latest
+          docker push praveenbgm06670/docker-frontend:$new_version
