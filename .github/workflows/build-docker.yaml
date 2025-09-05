@@ -15,6 +15,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: praveenbgm06670
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
       - name: Set up Docker meta for backend
         id: meta_backend
         uses: docker/metadata-action@v5
