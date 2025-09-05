@@ -21,4 +21,4 @@ jobs:
         run: |
           docker login -u praveenbgm06670 -p ${{ secrets.DOCKER_HUB_TOKEN }}
           docker push praveenbgm06670/docker-backend:latest
-          docker push veenbgm06670/docker-frontend:latest
+          docker push praveenbgm06670/docker-frontend:latest
