@@ -1,24 +1,66 @@
 name: Build and Publish image to Docker Hub
+
 on:
   push:
     branches:
       - main
     #paths:
-     # - 'api/Dockerfile'
-     #- 'front-end-nextjs/Dockerfile'
+    #  - 'api/Dockerfile'
+    #  - 'front-end-nextjs/Dockerfile'
 
 jobs:
   publish_images:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-      - name: build image
+
+      - name: Set up Docker meta for backend
+        id: meta_backend
+        uses: docker/metadata-action@v5
+        with:
+          images: praveenbgm06670/docker-backend
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=raw,value=latest
+
+      - name: Set up Docker meta for frontend
+        id: meta_frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: praveenbgm06670/docker-frontend
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=raw,value=latest
+
+      - name: Build backend image
         run: |
-          docker build ./api/ -t praveenbgm06670/docker-backend:latest
-          docker build ./front-end-nextjs/ -t praveenbgm06670/docker-frontend:latest
-      - name: push image to docker hub
+          docker build ./api/ -t ${{ steps.meta_backend.outputs.tags }}
+        env:
+          DOCKER_BUILDKIT: 1
+
+      - name: Build frontend image
         run: |
-          docker login -u praveenbgm06670 -p ${{ secrets.DOCKER_HUB_TOKEN }}
-          docker push praveenbgm06670/docker-backend:latest
-          docker push praveenbgm06670/docker-frontend:latest
+          docker build ./front-end-nextjs/ -t ${{ steps.meta_frontend.outputs.tags }}
+        env:
+          DOCKER_BUILDKIT: 1
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: praveenbgm06670
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Push backend image
+        run: |
+          for tag in ${{ steps.meta_backend.outputs.tags }}; do
+            docker push $tag
+          done
+
+      - name: Push frontend image
+        run: |
+          for tag in ${{ steps.meta_frontend.outputs.tags }}; do
+            docker push $tag
+            done
